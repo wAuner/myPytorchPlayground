@@ -14,7 +14,7 @@ class Add(torch.autograd.Function):
         x, y = ctx.saved_tensors
         grad_x = grad_output
         grad_y = grad_output
-        return grad_x, grad_y
+        return grad_x, grad_y   
 
 
 x = torch.tensor([1,2,3], requires_grad=True, dtype=torch.float)
