@@ -1,4 +1,6 @@
+import torch
 from torch.utils.data import Dataset
+from torchvision import transforms
 from path import Path
 from sklearn.model_selection import train_test_split
 import os
@@ -11,7 +13,7 @@ class ClassificationDS(Dataset):
     assumes one dataset per directory.
     Currently specific to CatsDogs dataset.
     """
-    def __init__(self, path, filenames, transforms, class2idx, idx2class, mode):
+    def __init__(self, path, filenames, tfms, class2idx, idx2class, mode):
         """
         Constructor is called by factory method, don't call directly
         """
@@ -19,10 +21,18 @@ class ClassificationDS(Dataset):
         self.filenames = filenames
         self.num_data = len(self.filenames)
         self.num_classes = len(class2idx)
-        self.transforms = transforms
+        self.transforms = tfms
         self.class2idx = class2idx
         self.idx2class = idx2class
         self.mode = mode
+        # check if items will be converted to tensors
+        # if so, convert labels to tensor as well
+        self.to_tensor = False
+        if tfms:
+            for transform in self.transforms.transforms:
+                if isinstance(transform, transforms.transforms.ToTensor):
+                    self.to_tensor = True
+                    break
 
 
     @staticmethod
@@ -43,7 +53,7 @@ class ClassificationDS(Dataset):
 
 
     @classmethod
-    def from_directory(cls, ds_path, val_split=0, transforms=None, mode="train"):
+    def from_directory(cls, ds_path, val_split=0, tfms=None, mode="train"):
         """
         Factory method to create seperate instances for training and validation
         set or a testset
@@ -56,11 +66,11 @@ class ClassificationDS(Dataset):
         # train directory
         if val_split > 0:
             train_fnames, val_fnames = train_test_split(filenames, test_size=val_split)
-            return cls(ds_path, train_fnames, transforms, class2idx, idx2class, mode="train"), \
-                cls(ds_path, val_fnames, transforms, class2idx, idx2class, mode="validation")
+            return cls(ds_path, train_fnames, tfms, class2idx, idx2class, mode="train"), \
+                cls(ds_path, val_fnames, tfms, class2idx, idx2class, mode="validation")
 
         # to create a dataset without splitting (e.g. only train or test)
-        return cls(ds_path, filenames, transforms, class2idx, idx2class, mode)
+        return cls(ds_path, filenames, tfms, class2idx, idx2class, mode)
 
     
     def __getitem__(self, idx):
@@ -74,7 +84,8 @@ class ClassificationDS(Dataset):
 
         if self.transforms:
             img = self.transforms(img)
-
+            if self.to_tensor:
+                label = torch.Tensor(label)
         return img, label
 
 
