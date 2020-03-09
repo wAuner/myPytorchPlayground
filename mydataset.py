@@ -17,6 +17,10 @@ class ClassificationDS(Dataset):
         """
         Constructor is called by factory method, don't call directly
         """
+        if tfms is not None and not isinstance(tfms, transforms.transforms.Compose): 
+            raise TypeError("""Expected transforms to be passed in 
+        as torchvision.transforms.transforms.Compose""")
+
         self.path = Path(path)
         self.filenames = filenames
         self.num_data = len(self.filenames)
@@ -27,6 +31,7 @@ class ClassificationDS(Dataset):
         self.mode = mode
         # check if items will be converted to tensors
         # if so, convert labels to tensor as well
+        # currently assumes multiple transforms as Compose object
         self.to_tensor = False
         if tfms:
             for transform in self.transforms.transforms:
