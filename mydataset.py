@@ -90,8 +90,9 @@ class ClassificationDS(Dataset):
         if self.transforms:
             img = self.transforms(img)
             if self.to_tensor:
-                label = torch.Tensor(label)
-        return img, label
+                # one-hot encoding of the labels is not necessary with nn.CrossEntropyLoss
+                label_tensor = torch.tensor(label)
+        return img, label_tensor
 
 
     def __len__(self):

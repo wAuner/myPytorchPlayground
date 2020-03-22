@@ -1,6 +1,7 @@
 import torch
 from torchvision import models
 from torch import nn
+import sys
 from mydataset import ClassificationDS
 
 
@@ -56,12 +57,14 @@ class MyResnet:
                 # feed forward pass
                 outputs = self.model(images)
                 _, predictions = torch.max(outputs, 1)
-                loss = loss_func(predictions, labels)
+                loss = loss_func(outputs, labels)
 
                 # calculate gradients and optimize
                 loss.backward()
                 optimizer.step()
 
-                accuracy = (predictions == labels).sum().div(len(images))
-                print(f"\rLoss of current batch: {loss.item()}")
-                print(f"\rAccuracy of current batch: {accuracy.item()}")
+                accuracy = (predictions == labels).sum().double().div(len(images))
+                sys.stdout.write(f"\rLoss of current batch: {loss.item():.2f}")
+                sys.stdout.write(f"\rAccuracy of current batch: {accuracy.item():.2f}")
+                sys.stdout.flush()
+                

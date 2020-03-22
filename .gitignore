@@ -2,3 +2,4 @@
 .vscode
 datasets/
 *.pyc
+.mypy_cache
