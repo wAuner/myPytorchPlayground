@@ -2,6 +2,8 @@ import torch
 from torchvision import models
 from torch import nn
 import sys
+from typing import Union
+from path import Path
 from mydataset import ClassificationDS
 
 
@@ -84,4 +86,12 @@ class MyResnet:
             print("Avg-Train accuracy for epoch {epoch}: {avg_epoch_acc:.2f} %")
 
             #TODO: implement validation
+
+
+        #TODO: implement loading and saving of checkpoints
+        def save_model(self, filepath: Union[str, Path]="./checkpoints") -> None:
+            pass
+
+        def load_model(self, filepath: Union[str, Path]) -> None:
+            pass
 
