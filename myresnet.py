@@ -17,7 +17,8 @@ class MyResnet:
         self.model.fc = new_head
         self.train_set = train_set
         self.val_set = val_set
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
     def freeze(self) -> None:
@@ -25,15 +26,10 @@ class MyResnet:
         for param in list(self.model.parameters())[:-1]:
             param.requires_grad = False
 
-    def __call__(self, arg: torch.Tensor):
+    def __call__(self, arg: torch.Tensor) -> torch.Tensor:
         return self.model(arg)
 
-    def train(
-            self,
-            bs: int = 32,
-            lr: float = 1e-3,
-            epochs: int = 1
-    ) -> None:
+    def train(self, bs: int = 32, lr: float = 1e-3, epochs: int = 1) -> None:
         train_dataloader = torch.utils.data.DataLoader(self.train_set,
                                                        batch_size=bs,
                                                        shuffle=True,
@@ -47,24 +43,45 @@ class MyResnet:
         optimizer = torch.optim.Adam(self.model.parameters(), lr)
 
         # actual training loop
+        print(f"Training on {self.device.type}")
         for epoch in range(epochs):
             print(f"Start training epoch {epoch}...")
+            # train metrics per epoch
+            correct_predictions = 0.
+            total_predictions = 0.
+            cum_train_loss = 0.
             for images, labels in train_dataloader:
+                # move batch to gpu if necessary
                 images = images.to(self.device)
                 labels = labels.to(self.device)
 
                 optimizer.zero_grad()
                 # feed forward pass
-                outputs = self.model(images)
-                _, predictions = torch.max(outputs, 1)
+                outputs = self.model(images)                
                 loss = loss_func(outputs, labels)
+                cum_train_loss += loss.data.item()
 
                 # calculate gradients and optimize
                 loss.backward()
                 optimizer.step()
 
-                accuracy = (predictions == labels).sum().double().div(len(images))
-                sys.stdout.write(f"\rLoss of current batch: {loss.item():.2f}")
-                sys.stdout.write(f"\rAccuracy of current batch: {accuracy.item():.2f}")
+                # calculate performance metrics
+                with torch.set_grad_enabled(False):
+                    _, predictions = torch.max(outputs, 1)
+                    correct_batch = (predictions == labels).sum()
+                    total_batch = len(images)
+                    accuracy = correct_batch.double().div(total_batch)
+                sys.stdout.write(f"""\rcurrent batch loss: {loss.item():.4f}\taccuracy: {accuracy.item()*100:.2f} %""")
                 sys.stdout.flush()
-                
+
+                correct_predictions += correct_batch
+                total_predictions += total_batch
+
+            # avg batch loss / num_batches
+            avg_epoch_loss = cum_train_loss / len(train_dataloader)
+            print("Avg-Train error for epoch {epoch}: {avg_epoch_loss:.4f}")
+            avg_epoch_acc = correct_predictions / total_predictions * 100
+            print("Avg-Train accuracy for epoch {epoch}: {avg_epoch_acc:.2f} %")
+
+            #TODO: implement validation
+

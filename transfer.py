@@ -21,7 +21,7 @@ train_transforms = transforms.Compose(
  
 train_set, val_set = ClassificationDS.from_directory(DATAPATH/"train", 0.2, train_transforms)
 # testing
-loader = torch.utils.data.DataLoader(train_set)
+loader = torch.utils.data.DataLoader(train_set, batch_size=8)
 img, label = next(iter(loader))
 model = MyResnet(2, train_set, val_set)
 output = model(img)
